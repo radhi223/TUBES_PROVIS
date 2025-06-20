@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class CartService {
-  static const String baseUrl = 'http://192.168.85.187:3000'; 
+  static const String baseUrl = 'http://192.168.85.187:3000';
 
   static Future<List<dynamic>> getCart(int userId) async {
     final response = await http.get(Uri.parse('$baseUrl/cart/$userId'));
@@ -13,10 +13,15 @@ class CartService {
     }
   }
 
-  static Future<void> addToCart(Map<String, dynamic> data) async {
+  static Future<void> addToCart(Map<String, dynamic> data,
+      {String? token}) async {
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
     final response = await http.post(
-      Uri.parse('$baseUrl/cart'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('$baseUrl/api/cart'),
+      headers: headers,
       body: json.encode(data),
     );
     if (response.statusCode != 201) {

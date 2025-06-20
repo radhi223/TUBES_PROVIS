@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'booking_status.dart';
 import 'navbar.dart';
 import 'pengembalian.dart';
-
+import 'services/transaction_service.dart';
 
 class ShowBookingPage extends StatefulWidget {
   const ShowBookingPage({super.key});
@@ -12,8 +12,36 @@ class ShowBookingPage extends StatefulWidget {
 }
 
 class _ShowBookingPageState extends State<ShowBookingPage> {
-  
   int selectedFilter = 0; // 0: Semua, 1: Hari ini, 2: Belum dikembalikan
+  int userId = 1; // TODO: Replace with actual user id from auth
+  List<dynamic> transactions = [];
+  bool isLoading = true;
+  String? errorMsg;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTransactions();
+  }
+
+  Future<void> _fetchTransactions() async {
+    setState(() {
+      isLoading = true;
+      errorMsg = null;
+    });
+    try {
+      final data = await TransactionService.getUserTransactions(userId);
+      setState(() {
+        transactions = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMsg = e.toString();
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,145 +55,146 @@ class _ShowBookingPageState extends State<ShowBookingPage> {
         automaticallyImplyLeading: false,
         toolbarHeight: 20,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Search
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Cari Riwayat Booking',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-            ),
-
-            // Tab Bar
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(width: 2, color: Colors.orange),
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: const Center(
-                      child: Text(
-                        'Pengembalian Produk Sewa',
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : errorMsg != null
+              ? Center(child: Text(errorMsg!))
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Search
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Cari Riwayat Booking',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BookingStatusPage(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: const Center(
-                        child: Text(
-                          'Riwayat Sewa Produk',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+
+                      // Tab Bar
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                      width: 2, color: Colors.orange),
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: const Center(
+                                child: Text(
+                                  'Pengembalian Produk Sewa',
+                                  style: TextStyle(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const BookingStatusPage(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                child: const Center(
+                                  child: Text(
+                                    'Riwayat Sewa Produk',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Filter Buttons
+                      // Filter Button (full width)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              // Tambahkan logika filter di sini jika diperlukan
+                            },
+                            icon: const Icon(Icons.filter_list,
+                                color: Colors.black),
+                            label: const Text('Filter',
+                                style: TextStyle(color: Colors.black)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              elevation: 4,
+                              shadowColor: Colors.grey,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+
+                      // Tanggal Hari Ini
+                      const Padding(
+                        padding: EdgeInsets.only(left: 16, top: 4, bottom: 8),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Tanggal Hari ini',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      // List transaksi dari database
+                      ...transactions.map((trx) {
+                        // Filter sesuai status/selectedFilter jika perlu
+                        String status = trx['status_item'] ?? '-';
+                        String tanggalKembali = trx['tanggal_kembali'] ?? '-';
+                        String namaProduk = trx['nama_produk'] ?? '-';
+                        String lokasi = trx['lokasi'] ?? '-';
+                        String gambar = trx['gambar'] ?? '';
+                        bool isDueToday = false;
+                        print(gambar);
+                        try {
+                          final today = DateTime.now();
+                          final tglKembali = DateTime.parse(tanggalKembali);
+                          isDueToday = tglKembali.year == today.year &&
+                              tglKembali.month == today.month &&
+                              tglKembali.day == today.day;
+                        } catch (_) {}
+                        return _buildProductCard(
+                          image: 'assets/images/$gambar',
+                          title: namaProduk,
+                          tanggal: tanggalKembali,
+                          lokasi: lokasi,
+                          jam: '-',
+                          isDueToday: isDueToday,
+                        );
+                      }).toList(),
+                    ],
                   ),
                 ),
-              ],
-            ),
-
-            // Filter Buttons
-            // Filter Button (full width)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // Tambahkan logika filter di sini jika diperlukan
-                  },
-                  icon: const Icon(Icons.filter_list, color: Colors.black),
-                  label: const Text('Filter', style: TextStyle(color: Colors.black)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    elevation: 4,
-                    shadowColor: Colors.grey,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  ),
-                ),
-              ),
-            ),
-
-
-
-            // Tanggal Hari Ini
-            const Padding(
-              padding: EdgeInsets.only(left: 16, top: 4, bottom: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Tanggal Hari ini',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-
-            // Card - Hari ini
-            if (selectedFilter == 1 || selectedFilter == 0)
-              _buildProductCard(
-                image: 'assets/images/Produk1.png',
-                title: 'Tenda Biru',
-                tanggal: '17 April 2025',
-                lokasi: 'Bandung',
-                jam: '08:00 - 18:00 WIB',
-                isDueToday: true,
-              ),
-
-            // Label belum dikembalikan
-            if (selectedFilter == 2 || selectedFilter == 0)
-              const Padding(
-                padding: EdgeInsets.only(left: 16, top: 12, bottom: 4),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Belum dikembalikan',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-
-            // Card - Belum Dikembalikan
-            if (selectedFilter == 2 || selectedFilter == 0)
-              _buildProductCard(
-                image: 'assets/images/Produk2.png',
-                title: 'Kompor Portable',
-                tanggal: '18 April 2025',
-                lokasi: 'Bandung',
-                jam: '08:00 - 18:00 WIB',
-                isDueToday: false,
-              ),
-          ],
-        ),
-      ),
       bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
     );
   }
@@ -228,9 +257,11 @@ class _ShowBookingPageState extends State<ShowBookingPage> {
                       Expanded(
                         child: Column(
                           children: [
-                            _infoRow(Icons.calendar_today_outlined, 'Tanggal Pengembalian', tanggal),
+                            _infoRow(Icons.calendar_today_outlined,
+                                'Tanggal Pengembalian', tanggal),
                             const SizedBox(height: 8),
-                            _infoRow(Icons.location_on_outlined, 'Lokasi Pengembalian', lokasi),
+                            _infoRow(Icons.location_on_outlined,
+                                'Lokasi Pengembalian', lokasi),
                             const SizedBox(height: 8),
                             _infoRow(Icons.access_time, 'Jam Operasional', jam),
                           ],
@@ -253,7 +284,8 @@ class _ShowBookingPageState extends State<ShowBookingPage> {
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   color: Colors.yellow,
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(16)),
                 ),
                 child: TextButton(
                   style: TextButton.styleFrom(
@@ -303,8 +335,12 @@ class _ShowBookingPageState extends State<ShowBookingPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 10, color: Colors.black54)),
-                Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                Text(label,
+                    style:
+                        const TextStyle(fontSize: 10, color: Colors.black54)),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
