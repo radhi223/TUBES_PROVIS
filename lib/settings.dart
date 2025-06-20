@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'navbar.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
-  Widget _buildSettingItem(String title) {
+  // Widget untuk item pengaturan
+  Widget _buildSettingItem(String title, {VoidCallback? onTap}) {
     return Column(
       children: [
         ListTile(
           title: Text(title, style: const TextStyle(fontSize: 16)),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-          onTap: () {}, // tambahkan action sesuai kebutuhan
+          onTap: onTap ?? () {},
         ),
         const Divider(height: 1),
       ],
     );
+  }
+
+  // Fungsi untuk logout
+  Future<void> _handleLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+
+    // Navigasi ke halaman login
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   @override
@@ -26,6 +37,8 @@ class SettingsPage extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
+
+            // Foto profil
             Stack(
               alignment: Alignment.center,
               children: [
@@ -44,7 +57,10 @@ class SettingsPage extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
+
+            // Container pengaturan
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -64,11 +80,42 @@ class SettingsPage extends StatelessWidget {
                     ),
                     const Divider(thickness: 1),
                     const SizedBox(height: 4),
+
+                    // Daftar item pengaturan
                     _buildSettingItem('Ubah Foto Profile'),
                     _buildSettingItem('Ubah Nama'),
                     _buildSettingItem('Ubah Nomor Telepon'),
                     _buildSettingItem('Ubah Password'),
                     _buildSettingItem('Atur No. KTP'),
+
+                    const SizedBox(height: 16),
+
+                    // Tombol Logout
+                    _buildSettingItem(
+                      'Logout',
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Konfirmasi Logout'),
+                            content: const Text('Apakah Anda yakin ingin logout?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Batal'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context); // tutup dialog
+                                  _handleLogout(context);
+                                },
+                                child: const Text('Logout'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
