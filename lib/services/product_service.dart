@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product.dart';
 
 class ProductService {
-  static const String baseUrl = 'http://localhost:3000/api/products'; // sesuaikan
+  static const String baseUrl = 'http://192.168.85.187:3000/api/products'; // sesuaikan
 
   static Future<List<Product>> fetchProducts() async {
     final prefs = await SharedPreferences.getInstance();

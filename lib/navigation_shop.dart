@@ -24,7 +24,7 @@ class _NavigationShopPageState extends State<NavigationShopPage> {
   }
 
   Future<void> fetchStores() async {
-    final response = await http.get(Uri.parse('http://localhost:3000/api/stores')); 
+    final response = await http.get(Uri.parse('http://192.168.85.187:3000/api/stores')); 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
       setState(() {

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class TransactionService {
-  static const String baseUrl = 'http://localhost:3000'; // Ganti jika backend online
+  static const String baseUrl = 'http://192.168.85.187:3000'; // Ganti jika backend online
 
   static Future<List<dynamic>> getAllTransactions() async {
     final response = await http.get(Uri.parse('$baseUrl/transactions'));
