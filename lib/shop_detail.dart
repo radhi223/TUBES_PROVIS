@@ -7,7 +7,7 @@ import 'models/product.dart';
 import 'services/product_service.dart';
 
 class ShopDetail extends StatefulWidget {
-  final Map<String,String> store;
+  final Map<String,String?> store;
 
   const ShopDetail({Key? key, required this.store}) : super(key: key);
 
@@ -36,7 +36,7 @@ class _ShopDetailState extends State<ShopDetail> {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, String> store = widget.store;
+    final Map<String, String?> store = widget.store;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -82,13 +82,12 @@ class _ShopDetailState extends State<ShopDetail> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                store['name']!,
+                              Text(store['nama'] ?? 'Toko Tanpa Nama',
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 4),
-                              Text('Lokasi : ${store['location']}'),
+                              Text('Lokasi : ${store['lokasi'] ?? 'Tidak diketahui'}'),
                             ],
                           ),
                         ],
@@ -169,7 +168,7 @@ class _ShopDetailState extends State<ShopDetail> {
                             const SizedBox(height: 4),
                             Text('Kategori : ${product.kategori}',
                                 style: const TextStyle(fontSize: 12)),
-                            Text('Lokasi    : ${product.lokasi}',
+                            Text('Lokasi : ${store['lokasi'] ?? 'Tidak diketahui'}',
                                 style: const TextStyle(fontSize: 12)),
                             Text('Harga     : ${product.hargaSewa}',
                                 style: const TextStyle(fontSize: 12)),

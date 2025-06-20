@@ -15,22 +15,25 @@ class NavigationShopPage extends StatefulWidget {
 class _NavigationShopPageState extends State<NavigationShopPage> {
   List<Map<String, dynamic>> rentalStores = [];
   bool isLoading = true;
-
+  
   @override
   void initState() {
     super.initState();
     fetchStores();
+    // print(rentalStores);
   }
 
   Future<void> fetchStores() async {
-    final response = await http.get(Uri.parse('http://localhost:3000/api/stores')); // Ganti IP/port sesuai backend kamu
+    final response = await http.get(Uri.parse('http://localhost:3000/api/stores')); 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List;
       setState(() {
         rentalStores = data.cast<Map<String, dynamic>>();
         isLoading = false;
       });
-      print(response.body);
+      // print(response.body);
+      // print("JUANCOK");
+      // print(rentalStores);
     } else {
       print('Gagal fetch toko');
     }
@@ -105,13 +108,14 @@ class _NavigationShopPageState extends State<NavigationShopPage> {
                     itemCount: rentalStores.length,
                     itemBuilder: (context, index) {
                       final store = rentalStores[index];
+                      // print(store);
                       return GestureDetector(
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => ShopDetail(store: {
-                              'name': store['name'],
-                              'location': store['location']
+                              'nama': store['nama'] ?? 'Toko Tanpa Nama',
+                              'lokasi': store['lokasi'] ?? 'Tidak diketahui',
                             })),
                           );
                         },
