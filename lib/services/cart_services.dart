@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class CartService {
-  static const String baseUrl = 'http://192.168.85.187:3000'; // Ganti jika backend online
+  static const String baseUrl = 'http://192.168.85.187:3000'; 
 
   static Future<List<dynamic>> getCart(int userId) async {
     final response = await http.get(Uri.parse('$baseUrl/cart/$userId'));

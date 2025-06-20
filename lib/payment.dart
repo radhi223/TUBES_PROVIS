@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'success_payment.dart';
 import 'models/product.dart';
+import 'services/transaction_service.dart';
 
 class PaymentPage extends StatefulWidget {
   final Object? product;
@@ -19,7 +20,8 @@ class _PaymentPageState extends State<PaymentPage> {
   String? selectedPayment;
   String? selectedCourier;
   final TextEditingController addressController = TextEditingController(
-    text: "Jl. Dr. Setiabudi No.229, Isola,\nKec. Sukasari, Kota Bandung,\nJawa Barat 40154",
+    text:
+        "Jl. Dr. Setiabudi No.229, Isola,\nKec. Sukasari, Kota Bandung,\nJawa Barat 40154",
   );
 
   @override
@@ -75,7 +77,8 @@ class _PaymentPageState extends State<PaymentPage> {
             // Metode Pembayaran
             Card(
               color: Colors.grey[100],
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
                   buildPaymentOption("QRIS", "assets/images/qris.png"),
@@ -90,13 +93,16 @@ class _PaymentPageState extends State<PaymentPage> {
             // Detail Tagihan
             Card(
               color: Colors.grey[100],
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Detail Tagihan", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Text("Detail Tagihan",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 8),
                     buildDetailRow("Biaya Produk ($totalQuantity)", totalPrice),
                     buildDetailRow("Biaya Pengiriman", shippingFee),
@@ -123,25 +129,91 @@ class _PaymentPageState extends State<PaymentPage> {
                 ),
                 icon: const Icon(Icons.check_circle_outline),
                 label: const Text("Konfirmasi pembayaran"),
-                onPressed: () {
+                onPressed: () async {
                   if (selectedPayment == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Pilih metode pembayaran terlebih dahulu.")),
+                      const SnackBar(
+                          content:
+                              Text("Pilih metode pembayaran terlebih dahulu.")),
                     );
                     return;
                   }
 
                   if (useShipping && selectedCourier == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Pilih jasa pengiriman terlebih dahulu.")),
+                      const SnackBar(
+                          content:
+                              Text("Pilih jasa pengiriman terlebih dahulu.")),
                     );
                     return;
                   }
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SuccessPaymentPage()),
-                  );
+                  // Save transaction(s) to database
+                  try {
+                    int penyewaId =
+                        1; // TODO: Replace with actual user id from auth
+                    if (widget.product is Map<String, dynamic>) {
+                      final productMap = widget.product as Map<String, dynamic>;
+                      final productObj = productMap["product"] as Product;
+                      final quantity = productMap["quantity"] as int;
+                      final startDate = productMap["startDate"];
+                      final endDate = productMap["endDate"];
+                      await TransactionService.createTransaction({
+                        'product_id': productObj.productId,
+                        'penyewa_id': penyewaId,
+                        'nominal': productObj.hargaSewa * quantity,
+                        'jumlah': quantity,
+                        'tanggal_mulai': startDate != null
+                            ? startDate.toString().substring(0, 10)
+                            : DateTime.now().toString().substring(0, 10),
+                        'tanggal_kembali': endDate != null
+                            ? endDate.toString().substring(0, 10)
+                            : DateTime.now()
+                                .add(Duration(days: 1))
+                                .toString()
+                                .substring(0, 10),
+                        'jenis_pembayaran':
+                            selectedPayment?.toLowerCase() ?? 'lainnya',
+                        'status_item': 'confirmed',
+                      });
+                    } else if (widget.product is List<Map<String, dynamic>>) {
+                      final products =
+                          widget.product as List<Map<String, dynamic>>;
+                      for (var product in products) {
+                        final productObj = product["product"] as Product;
+                        final quantity = product["quantity"] as int;
+                        final startDate = product["startDate"];
+                        final endDate = product["endDate"];
+                        await TransactionService.createTransaction({
+                          'product_id': productObj.productId,
+                          'penyewa_id': penyewaId,
+                          'nominal': productObj.hargaSewa * quantity,
+                          'jumlah': quantity,
+                          'tanggal_mulai': startDate != null
+                              ? startDate.toString().substring(0, 10)
+                              : DateTime.now().toString().substring(0, 10),
+                          'tanggal_kembali': endDate != null
+                              ? endDate.toString().substring(0, 10)
+                              : DateTime.now()
+                                  .add(Duration(days: 1))
+                                  .toString()
+                                  .substring(0, 10),
+                          'jenis_pembayaran':
+                              selectedPayment?.toLowerCase() ?? 'lainnya',
+                          'status_item': 'confirmed',
+                        });
+                      }
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SuccessPaymentPage()),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Gagal menyimpan transaksi: $e')),
+                    );
+                  }
                 },
               ),
             ),
@@ -178,7 +250,9 @@ class _PaymentPageState extends State<PaymentPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(product.namaProduk, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(product.namaProduk,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 4),
                   buildProductInfo("Kategori", product.kategori),
                   buildProductInfo("Lokasi", product.lokasi),
@@ -201,7 +275,8 @@ class _PaymentPageState extends State<PaymentPage> {
       child: RichText(
         text: TextSpan(
           text: "$label: ",
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style:
+              const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           children: [
             TextSpan(
               text: textValue,
@@ -255,8 +330,12 @@ class _PaymentPageState extends State<PaymentPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: isBold ? const TextStyle(fontWeight: FontWeight.bold) : null),
-          Text("Rp. $amount", style: isBold ? const TextStyle(fontWeight: FontWeight.bold) : null),
+          Text(label,
+              style:
+                  isBold ? const TextStyle(fontWeight: FontWeight.bold) : null),
+          Text("Rp. $amount",
+              style:
+                  isBold ? const TextStyle(fontWeight: FontWeight.bold) : null),
         ],
       ),
     );
